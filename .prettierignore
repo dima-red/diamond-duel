@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+coverage
+*.min.js
+*.min.css
+.next
+.nest
+.cache
+build
+public
+logs
+tmp
