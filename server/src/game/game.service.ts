@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import type { Cell, Game } from './game.types';
+import type { Cell, Game, PublicGameState } from './game.types';
 import { CreateGameDto } from './dto/create-game.dto';
 
 @Injectable()
 export class GameService {
+  private static readonly REQUIRED_PLAYERS_PER_GAME = 2;
+
   private readonly games = new Map<string, Game>();
 
   createGame(dto: CreateGameDto): Game {
@@ -37,6 +39,154 @@ export class GameService {
 
   getGame(id: string): Game | undefined {
     return this.games.get(id);
+  }
+
+  joinGame(gameId: string, playerId: string, playerName?: string): Game {
+    const game = this.getExistingGame(gameId);
+
+    let player = game.players.find((candidate) => candidate.id === playerId);
+
+    if (!player) {
+      if (game.players.length >= GameService.REQUIRED_PLAYERS_PER_GAME) {
+        throw new BadRequestException('Game already has required number of players');
+      }
+
+      player = { id: playerId, score: 0, name: playerName };
+      game.players.push(player);
+    }
+
+    if (
+      game.players.length === GameService.REQUIRED_PLAYERS_PER_GAME &&
+      game.status === 'waiting_for_players'
+    ) {
+      game.status = 'in_progress';
+      game.currentPlayerId = game.players[0]?.id;
+    }
+
+    return game;
+  }
+
+  revealCell(gameId: string, playerId: string, x: number, y: number): Game {
+    const game = this.getExistingGame(gameId);
+
+    this.ensureGameInProgress(game);
+    this.ensurePlayerTurn(game, playerId);
+
+    const cell = this.getHiddenCell(game, x, y);
+
+    cell.state = 'revealed';
+    cell.ownerPlayerId = playerId;
+
+    const player = this.getExistingPlayer(game, playerId);
+
+    if (cell.hasDiamond) {
+      player.score += 1;
+    } else {
+      const otherPlayer = game.players.find((candidate) => candidate.id !== playerId);
+
+      if (otherPlayer) {
+        game.currentPlayerId = otherPlayer.id;
+      }
+    }
+
+    this.updateGameStatusIfFinished(game);
+
+    return game;
+  }
+
+  serializeForClient(game: Game): PublicGameState {
+    return {
+      id: game.id,
+      size: game.size,
+      diamondsCount: game.diamondsCount,
+      status: game.status,
+      currentPlayerId: game.currentPlayerId,
+      players: game.players,
+      cells: game.cells.map((cell) => {
+        if (cell.state === 'hidden') {
+          return {
+            x: cell.x,
+            y: cell.y,
+            state: cell.state,
+          };
+        }
+
+        if (cell.hasDiamond) {
+          return {
+            x: cell.x,
+            y: cell.y,
+            state: cell.state,
+            type: 'diamond',
+            ownerPlayerId: cell.ownerPlayerId,
+          };
+        }
+
+        return {
+          x: cell.x,
+          y: cell.y,
+          state: cell.state,
+          type: 'number',
+          adjacentDiamonds: cell.adjacentDiamonds,
+          ownerPlayerId: cell.ownerPlayerId,
+        };
+      }),
+    };
+  }
+
+  private getExistingGame(gameId: string): Game {
+    const game = this.games.get(gameId);
+
+    if (!game) {
+      throw new BadRequestException('Game not found');
+    }
+
+    return game;
+  }
+
+  private ensureGameInProgress(game: Game): void {
+    if (game.status !== 'in_progress') {
+      throw new BadRequestException('Game is not in progress');
+    }
+  }
+
+  private ensurePlayerTurn(game: Game, playerId: string): void {
+    if (game.currentPlayerId !== playerId) {
+      throw new BadRequestException("It is not this player's turn");
+    }
+  }
+
+  private getExistingPlayer(game: Game, playerId: string) {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+
+    if (!player) {
+      throw new BadRequestException('Player not found in this game');
+    }
+
+    return player;
+  }
+
+  private getHiddenCell(game: Game, x: number, y: number): Cell {
+    const cell = game.cells.find((candidate) => candidate.x === x && candidate.y === y);
+
+    if (!cell) {
+      throw new BadRequestException('Cell not found');
+    }
+
+    if (cell.state === 'revealed') {
+      throw new BadRequestException('Cell is already revealed');
+    }
+
+    return cell;
+  }
+
+  private updateGameStatusIfFinished(game: Game): void {
+    const foundDiamonds = game.cells.filter(
+      (candidate) => candidate.hasDiamond && candidate.state === 'revealed',
+    ).length;
+
+    if (foundDiamonds >= game.diamondsCount) {
+      game.status = 'finished';
+    }
   }
 
   private createCells(size: number, diamondsCount: number): Cell[] {
