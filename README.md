@@ -2,6 +2,7 @@
 
 Real-time two-player game: take turns revealing cells on an N×N board. Some cells hide diamonds; others show how many diamonds are nearby. Revealing a diamond scores a point and grants an extra turn. The player with more diamonds when all are found wins.
 
+![Gameplay example — light and dark theme](docs/screenshots/gameplay-example.png)
 ---
 
 ## English
