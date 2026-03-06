@@ -1,10 +1,10 @@
 import type { CreateGameResponse } from '@/types/game'
 
+const DEFAULT_API_BASE = 'http://localhost:3000'
+
 export function getApiBase(): string {
-  return (
-    (import.meta as unknown as { env: { VITE_API_URL?: string } }).env
-      .VITE_API_URL ?? 'http://localhost:3000'
-  )
+  const env = import.meta.env as { VITE_API_URL?: string }
+  return env.VITE_API_URL ?? DEFAULT_API_BASE
 }
 
 export async function createGame(params: {

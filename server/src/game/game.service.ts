@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import type { Cell, Game, PublicGameState } from './game.types';
+import type { Cell, Game, PublicCell, PublicGameState } from './game.types';
 import { CreateGameDto } from './dto/create-game.dto';
 
 @Injectable()
@@ -102,34 +102,26 @@ export class GameService {
       status: game.status,
       currentPlayerId: game.currentPlayerId,
       players: game.players,
-      cells: game.cells.map((cell) => {
-        if (cell.state === 'hidden') {
-          return {
-            x: cell.x,
-            y: cell.y,
-            state: cell.state,
-          };
-        }
+      cells: game.cells.map((cell) => this.serializeCell(cell)),
+    };
+  }
 
-        if (cell.hasDiamond) {
-          return {
-            x: cell.x,
-            y: cell.y,
-            state: cell.state,
-            type: 'diamond',
-            ownerPlayerId: cell.ownerPlayerId,
-          };
-        }
+  private serializeCell(cell: Cell): PublicCell {
+    const base = { x: cell.x, y: cell.y, state: cell.state };
 
-        return {
-          x: cell.x,
-          y: cell.y,
-          state: cell.state,
-          type: 'number',
-          adjacentDiamonds: cell.adjacentDiamonds,
-          ownerPlayerId: cell.ownerPlayerId,
-        };
-      }),
+    if (cell.state === 'hidden') {
+      return base;
+    }
+
+    if (cell.hasDiamond) {
+      return { ...base, type: 'diamond', ownerPlayerId: cell.ownerPlayerId };
+    }
+
+    return {
+      ...base,
+      type: 'number',
+      adjacentDiamonds: cell.adjacentDiamonds,
+      ownerPlayerId: cell.ownerPlayerId,
     };
   }
 

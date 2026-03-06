@@ -18,6 +18,7 @@ const nameInput = ref('')
 const nameInputError = ref('')
 let socket: ReturnType<typeof io> | null = null
 
+const COPY_FEEDBACK_MS = 2000
 const needsNameInput = computed(() => !nickname.value && !state.value)
 
 // Ссылка для приглашения второго игрока — без nickname, чтобы у второго было своё имя (Игрок 2)
@@ -30,7 +31,7 @@ async function copyGameLink() {
   try {
     await navigator.clipboard.writeText(shareableGameLink.value)
     copyFeedback.value = 'Скопировано'
-    setTimeout(() => { copyFeedback.value = '' }, 2000)
+    setTimeout(() => { copyFeedback.value = '' }, COPY_FEEDBACK_MS)
   } catch {
     copyFeedback.value = 'Не удалось скопировать'
   }
