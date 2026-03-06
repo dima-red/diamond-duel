@@ -37,7 +37,7 @@ html[data-theme='system'] {
 
   /* game grid — светлая тема: тёмные ячейки на светлом фоне */
   --color-cell-hidden: #a8a8a8;
-  --color-cell-revealed: #b8b8b8;
+  --color-cell-revealed: #ffffff;
   --color-cell-hover: #909090;
   /* подложка под полем: в светлой теме — тёмная */
   --color-grid-bg: #000;
@@ -59,7 +59,7 @@ html[data-theme='system'] {
 
     /* тёмная тема: светлые ячейки на тёмном фоне */
     --color-cell-hidden: #404040;
-    --color-cell-revealed: #4a4a4a;
+    --color-cell-revealed: #6c6c6c;
     --color-cell-hover: #5a5a5a;
     /* подложка под полем: в тёмной теме — светлая */
     --color-grid-bg: #fff;
@@ -79,7 +79,7 @@ html[data-theme='dark'] {
 
   /* тёмная тема: светлые ячейки на тёмном фоне */
   --color-cell-hidden: #404040;
-  --color-cell-revealed: #4a4a4a;
+  --color-cell-revealed: #6c6c6c;
   --color-cell-hover: #5a5a5a;
   /* подложка под полем: в тёмной теме — светлая */
   --color-grid-bg: #fff;

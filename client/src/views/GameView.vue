@@ -267,6 +267,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   background: var(--color-background);
+  color: var(--color-text);
 }
 .invite-copy {
   padding: 0.5rem 0.75rem;
